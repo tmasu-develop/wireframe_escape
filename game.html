@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GREEN MONITOR WIREFRAME ESCAPE</title>
+    <style>
+        /* 1980年代 of グリーンモニターPC環境をイメージした黒と緑のスタイリング */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; /* スマホでのズームやダブルタップ、スクロールを防止して操作性を向上 */
+        }
+        
+        body {
+            background-color: #020802;
+            color: #3f3;
+            font-family: 'Courier New', Courier, monospace, "MS Gothic", "Medium Gothic", sans-serif;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* レトロなCRTモニター筐体をイメージしたデザイン */
+        .monitor-frame {
+            background-color: #121a12;
+            border: 8px solid #2a352a;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.15), inset 0 0 15px rgba(0,0,0,0.8);
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* 画面の反射やノイズを再現するオーバーレイ */
+        .screen-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 3px solid #081108;
+            aspect-ratio: 16 / 10;
+            cursor: pointer;
+        }
+
+        /* 走査線（スキャンライン）エフェクト */
+        .screen-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* ブラウン管の湾曲とガラス管の光を模したグラデーション */
+        .screen-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 255, 0, 0.08) 0%, rgba(0, 0, 0, 0.5) 100%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            image-rendering: pixelated;
+        }
+
+        /* ステータスおよびメッセージボード */
+        .status-panel {
+            margin-top: 10px;
+            background-color: #050d05;
+            border: 2px solid #1a3a1a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.4;
+            text-shadow: 0 0 4px #3f3;
+            min-height: 64px;
+        }
+
+        .highlight {
+            color: #fff;
+            text-shadow: 0 0 8px #fff, 0 0 15px #3f3;
+            font-weight: bold;
+        }
+
+        /* 操作コントローラー（タッチパネルに最適化したレイアウト） */
+        .controller-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            background-color: #0d160d;
+            border: 2px solid #203520;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            gap: 10px;
+        }
+
+        /* 左側：十字キー */
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            width: 135px;
+            height: 135px;
+        }
+
+        .dpad-btn {
+            background-color: #122512;
+            border: 2px solid #2f5f2f;
+            color: #3f3;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #081208;
+            text-shadow: 0 0 5px #3f3;
+            transition: none; /* モバイルではレスポンス向上のためアニメーション無し */
+        }
+
+        .dpad-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #081208;
+            background-color: #204020;
+        }
+
+        .dpad-empty {
+            visibility: hidden;
+        }
+
+        /* 右側：アクションボタン */
+        .action-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .action-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+        }
+
+        /* Z/ACTIONボタン */
+        .btn-action {
+            background-color: #1a4a1a;
+            border: 3px solid #3f3;
+            color: #3f3;
+            text-shadow: 0 0 4px #3f3;
+        }
+        .btn-action:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.5);
+            background-color: #2a6a2a;
+        }
+
+        /* X/CANCELボタン */
+        .btn-cancel {
+            background-color: #4a1a1a;
+            border: 3px solid #f55;
+            color: #f55;
+            text-shadow: 0 0 4px #f55;
+        }
+        .btn-cancel:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.5);
+            background-color: #6a2a2a;
+        }
+
+        .btn-desc-main {
+            font-size: 11px;
+            line-height: 1;
+        }
+        .btn-desc-sub {
+            font-size: 9px;
+            margin-top: 1px;
+            opacity: 0.8;
+        }
+
+        /* コントロール案内・補助メニュー */
+        .footer-menu {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+            padding: 0 5px;
+        }
+
+        .instructions {
+            font-size: 10px;
+            color: #1a6a1a;
+            line-height: 1.3;
+        }
+
+        .toggle-btn {
+            background: #091709;
+            border: 1px solid #1a4a1a;
+            color: #1a6a1a;
+            padding: 4px 10px;
+            font-size: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .toggle-btn.active {
+            border-color: #3f3;
+            color: #3f3;
+            text-shadow: 0 0 3px #3f3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="monitor-frame">
+    <!-- レトロCRTディスプレイ画面 -->
+    <div class="screen-container" id="screenContainer">
+        <div class="screen-overlay"></div>
+        <canvas id="gameCanvas" width="640" height="400"></canvas>
+    </div>
+
+    <!-- ステータスパネル（テキストログ） -->
+    <div class="status-panel">
+        <div id="location-info">SYSTEM INIT...</div>
+        <div id="narrator-text" class="highlight">主電源をONにしてください。</div>
+    </div>
+
+    <!-- タッチパネル（スマホ操作用コントローラー） -->
+    <div class="controller-panel">
+        <!-- 左側：十字キー（移動＆旋回） -->
+        <div class="dpad-container">
+            <div class="dpad-empty"></div>
+            <div class="dpad-btn" id="ctrl-up">▲</div>
+            <div class="dpad-empty"></div>
+            
+            <div class="dpad-btn" id="ctrl-left">◀</div>
+            <div class="dpad-empty"></div>
+            <div class="dpad-btn" id="ctrl-right">▶</div>
+            
+            <div class="dpad-empty"></div>
+            <div class="dpad-btn" id="ctrl-down">▼</div>
+            <div class="dpad-empty"></div>
+        </div>
+
+        <!-- 右側：アクション（決定）＆キャンセル -->
+        <div class="action-container">
+            <div class="action-btn btn-cancel" id="ctrl-cancel">
+                <span class="btn-desc-main">CANCEL</span>
+                <span class="btn-desc-sub">[ X ]</span>
+            </div>
+            <div class="action-btn btn-action" id="ctrl-action">
+                <span class="btn-desc-main">ACTION</span>
+                <span class="btn-desc-sub">[ Z ]</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター補助メニュー（操作説明 ＆ ミニマップ切替） -->
+    <div class="footer-menu">
+        <div class="instructions">
+            PCキーボード対応: 矢印キーで移動<br>
+            [Z] でACTION / [X] でCANCEL
+        </div>
+        <button class="toggle-btn" id="map-toggle">MINI MAP: OFF</button>
+    </div>
+</div>
+
+<script>
+// --- Canvas設定 ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- マップ構造 (8x8の大邸宅) ---
+const MAP_SIZE = 8;
+const map = [
+    [0,0,0,0,0,0,0,0],
+    [0,1,1,0,2,1,1,0],
+    [0,1,0,0,0,0,1,0],
+    [0,1,1,1,1,0,1,0],
+    [0,0,0,1,0,0,1,0],
+    [0,1,1,1,0,1,1,0],
+    [0,1,0,1,1,1,0,0],
+    [0,3,0,0,0,0,0,0] // (1, 7) が出口(3)
+];
+
+// 隠し通路の座標 (左側の壁の裏に隠された小部屋)。ACTIONで調べるまでは通常の壁(0)として振る舞う
+const SECRET_PASSAGE = { x: 0, y: 3 };
+
+// --- プレイヤーの初期状態 ---
+let player = {
+    x: 1,
+    y: 1,
+    dir: 2 // 0: 北(上), 1: 東(右), 2: 南(下), 3: 西(left)
+};
+
+// 移動用方向ベクトル
+const DX = [0, 1, 0, -1];
+const DY = [-1, 0, 1, 0];
+const DIR_NAMES = ["北", "東", "南", "西"];
+
+// ゲーム状態 (POWER_OFF: 主電源オフ, BOOT_CRT: ブラウン管起動, BOOT_TEXT: 起動シークエンス)
+let gameState = "POWER_OFF"; 
+let bootTimer = 0; // ブート演出用の進捗カウンター
+let hasKey = false;
+let showMap = false;
+let currentMessage = "POWER IS OFF. PRESS ANY KEY TO POWER ON.";
+let frameCount = 0;
+
+// 隠し通路の発見状態
+let secretPassageFound = false;
+let secretBonusClaimed = false;
+
+// タイムアタック用の計測状態（ベストタイムはブラウザのlocalStorageに保存）
+let playStartTime = 0;
+let clearTimeSeconds = null;
+let bestTimeSeconds = null;
+try {
+    let savedBestTime = localStorage.getItem('greenMonitorEscape_bestTime');
+    if (savedBestTime) bestTimeSeconds = parseFloat(savedBestTime);
+} catch (e) {}
+
+// エフェクト演出用フラグ
+let shakeFrames = 0;
+let flashFrames = 0;
+
+// キャラクター音発声用の差分検知バッファ
+let lastCharCount = -1;
+let lastLineIndex = -1;
+
+// レトロブートシーケンスのメッセージ
+const BOOT_MESSAGES = [
+    "CRT MONITOR MODEL-88 ... ONLINE",
+    "GREEN-BIOS V1.02 (C)1982 BY G-RAM",
+    "CPU: L80A AT 4.00MHz",
+    "MEMORY TEST: 64KB OK",
+    "SYSTEM PERIPHERAL STATUS:",
+    "  CRT DISPLAY CHIP ... OK",
+    "  KEYPAD PORT [JOY1] ... ACTIVE",
+    "BOOTING CASSETTE TAPELOADER...",
+    "READ 'ESCAPE.BIN' FROM TAPE...",
+    "FOUND: WIREFRAME GRAPHICS CHIP",
+    "LOADING MEMORY: ********** 100%",
+    "10 PRINT \"ESCAPE OR DIE\" : GOTO 10",
+    "SYSTEM INITIALIZED. READY TO START."
+];
+
+// --- Web Audio API (レトロ音源エミュレータ) ---
+let audioCtx = null;
+
+// カセットテープ（サッポロ・シティ・スタンダード）ロード音生成用
+let tapeLoadOsc = null;
+let tapeLoadNoise = null;
+let tapeLoadGain = null;
+let tapeLoadInterval = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+// 主電源ONの「パチンッ」という心地よいアナログスイッチ音
+function playPowerSwitchSound() {
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+        
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    } catch(e) {}
+}
+
+// ハドソンPCゲーム等で採用されていた、1文字ずつ「ピピピピッ」と小気味よく鳴る高音（テキストBEEP音）
+function playRetroCharSound() {
+    if (!audioCtx) return;
+
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        osc.type = 'sine'; 
+        osc.frequency.setValueAtTime(1380, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.018);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.02);
+    } catch(e) {}
+}
+
+// 起動時の改行・コマンド処理用の少し長めの制御音
+function playRetroLineSound() {
+    if (!audioCtx) return;
+
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.07);
+    } catch(e) {}
+}
+
+// ★ サッポロ・シティ・スタンダード（変調データロード音）の再現
+// カセットテープならではの「ピーーーーー（パイロットトーン）」と「ピロピロピロピロ（FSK変調データ音）」、そしてヒスノイズ
+function startTapeLoadSound() {
+    initAudio();
+    if (!audioCtx) return;
+
+    try {
+        // 1. テープのヒスノイズ「サーーー」を生成するバッファ
+        let bufferSize = audioCtx.sampleRate * 2;
+        let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        let output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+        
+        tapeLoadNoise = audioCtx.createBufferSource();
+        tapeLoadNoise.buffer = noiseBuffer;
+        tapeLoadNoise.loop = true;
+        
+        let noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.012, audioCtx.currentTime); // 小さめのホワイトノイズ
+
+        // 2. FSK（周波数シフトキーイング）変調オシレーター
+        tapeLoadOsc = audioCtx.createOscillator();
+        tapeLoadOsc.type = 'sine';
+        
+        // 3. データパルス（ピロピロ音）をシミュレートするLFO
+        let mod = audioCtx.createOscillator();
+        let modGain = audioCtx.createGain();
+        mod.type = 'square';
+        mod.frequency.setValueAtTime(45, audioCtx.currentTime); // 45Hzのデータパルス
+        
+        // 1800Hzを中心に揺らすことで、スペース信号(1200Hz)とマーク信号(2400Hz)をエミュレート (1800±600)
+        tapeLoadOsc.frequency.setValueAtTime(1800, audioCtx.currentTime);
+        modGain.gain.setValueAtTime(600, audioCtx.currentTime);
+        
+        tapeLoadGain = audioCtx.createGain();
+        tapeLoadGain.gain.setValueAtTime(0.035, audioCtx.currentTime);
+        
+        // 接続
+        mod.connect(modGain);
+        modGain.connect(tapeLoadOsc.frequency);
+        
+        tapeLoadNoise.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        
+        tapeLoadOsc.connect(tapeLoadGain);
+        tapeLoadGain.connect(audioCtx.destination);
+        
+        // 再生開始
+        mod.start();
+        tapeLoadNoise.start();
+        tapeLoadOsc.start();
+        
+        // タイマーでデータパルスの不規則性を出し、ピー・ヒョロロ・ピーという本物のロード感を演出
+        tapeLoadInterval = setInterval(() => {
+            if (!audioCtx || !tapeLoadOsc) return;
+            let now = audioCtx.currentTime;
+            
+            // LFOのレートをランダムに変化させデジタルパルスを模倣
+            mod.frequency.setValueAtTime(25 + Math.random() * 60, now);
+            
+            // 時々発生するマーク信号のみのパイロットトーン（ピーという単一音）
+            if (Math.random() < 0.20) {
+                modGain.gain.setValueAtTime(0, now);
+                tapeLoadOsc.frequency.setValueAtTime(2400, now); // 2400Hzの一定音
+            } else {
+                modGain.gain.setValueAtTime(600, now);
+                tapeLoadOsc.frequency.setValueAtTime(1800, now);
+            }
+        }, 120);
+
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+// ロード音を停止する
+function stopTapeLoadSound() {
+    if (tapeLoadInterval) {
+        clearInterval(tapeLoadInterval);
+        tapeLoadInterval = null;
+    }
+    try {
+        if (tapeLoadOsc) {
+            tapeLoadOsc.stop();
+            tapeLoadOsc.disconnect();
+            tapeLoadOsc = null;
+        }
+        if (tapeLoadNoise) {
+            tapeLoadNoise.stop();
+            tapeLoadNoise.disconnect();
+            tapeLoadNoise = null;
+        }
+        if (tapeLoadGain) {
+            tapeLoadGain.disconnect();
+            tapeLoadGain = null;
+        }
+    } catch(e) {}
+}
+
+// 鍵を入手したときのレトロファンファーレ
+function playGetItemSound() {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            
+            gain.gain.setValueAtTime(0.06, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.15);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.15);
+        });
+    } catch(e) {}
+}
+
+// 歩いたときの静かなカチッという低音ノイズ
+function playStepSound() {
+    if (!audioCtx) return;
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(90, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.04);
+        
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.04);
+    } catch(e) {}
+}
+
+// 障害物に衝突したときの鈍いBEEP
+function playBuzzerSound() {
+    if (!audioCtx) return;
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+    } catch(e) {}
+}
+
+// --- 電源ON処理 ---
+function powerOn() {
+    if (gameState === "POWER_OFF") {
+        initAudio();
+        playPowerSwitchSound();
+        gameState = "BOOT_CRT";
+        bootTimer = 0;
+        lastCharCount = -1;
+        lastLineIndex = -1;
+        currentMessage = "POWER ON... CRT INITIALIZING.";
+    }
+}
+
+// --- ゲーム開始用処理 ---
+function startExploring() {
+    // 起動シーケンス中の割り込みスキップ、またはタイトルからの開始
+    if (gameState === "POWER_OFF") {
+        powerOn();
+        return;
+    }
+    stopTapeLoadSound(); // ロード音が鳴り続けていれば確実に消す
+    if (gameState === "BOOT_CRT" || gameState === "BOOT_TEXT" || gameState === "TITLE") {
+        initAudio();
+        gameState = "PLAY";
+        hasKey = false;
+        player.x = 1;
+        player.y = 1;
+        player.dir = 2;
+        // マップ上の鍵を再配置（リプレイ用）
+        map[1][4] = 2;
+        // 隠し通路も再び壁に戻す（リプレイ用）
+        map[SECRET_PASSAGE.y][SECRET_PASSAGE.x] = 0;
+        secretPassageFound = false;
+        secretBonusClaimed = false;
+        playStartTime = performance.now();
+        clearTimeSeconds = null;
+        currentMessage = "不気味な洋館に迷い込んだ。鍵を見つけて脱出しろ。";
+        triggerActionEffects();
+    }
+}
+
+// --- キーボード入力処理 ---
+window.addEventListener('keydown', function(e) {
+    if (gameState === "POWER_OFF") {
+        e.preventDefault();
+        powerOn();
+        return;
+    }
+
+    if (gameState === "BOOT_CRT" || gameState === "BOOT_TEXT") {
+        e.preventDefault();
+        startExploring();
+        return;
+    }
+
+    if (gameState === "TITLE") {
+        e.preventDefault();
+        startExploring();
+        return;
+    }
+
+    if (gameState === "CLEAR") {
+        if (e.key === "z" || e.key === "Z" || e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            gameState = "TITLE";
+            currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+        }
+        return;
+    }
+
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+        e.preventDefault();
+        moveForward();
+    } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        moveBackward();
+    } else if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        e.preventDefault();
+        turnLeft();
+    } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        e.preventDefault();
+        turnRight();
+    } else if (e.key === "z" || e.key === "Z" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        executeAction();
+    } else if (e.key === "x" || e.key === "X" || e.key === "Escape") {
+        e.preventDefault();
+        executeCancel();
+    }
+});
+
+// Canvasタップで割り込み処理
+document.getElementById('screenContainer').addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    if (gameState === "POWER_OFF") {
+        powerOn();
+    } else if (gameState === "BOOT_CRT" || gameState === "BOOT_TEXT" || gameState === "TITLE") {
+        startExploring();
+    } else if (gameState === "CLEAR") {
+        gameState = "TITLE";
+        currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+    }
+});
+
+// --- タッチ操作パネルのイベントリスナー ---
+setupButton('ctrl-up', moveForward);
+setupButton('ctrl-down', moveBackward);
+setupButton('ctrl-left', turnLeft);
+setupButton('ctrl-right', turnRight);
+setupButton('ctrl-action', executeAction);
+setupButton('ctrl-cancel', executeCancel);
+
+function setupButton(id, callback) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+
+    btn.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        if (gameState === "POWER_OFF") {
+            powerOn();
+            return;
+        }
+        if (gameState === "BOOT_CRT" || gameState === "BOOT_TEXT") {
+            startExploring();
+            return;
+        }
+        if (gameState === "TITLE") {
+            startExploring();
+            return;
+        }
+        if (gameState === "CLEAR") {
+            gameState = "TITLE";
+            currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+            return;
+        }
+        callback();
+    });
+}
+
+// ミニマップ切替
+const mapToggleBtn = document.getElementById('map-toggle');
+mapToggleBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (gameState === "PLAY") {
+        showMap = !showMap;
+        mapToggleBtn.innerText = showMap ? "MINI MAP: ON" : "MINI MAP: OFF";
+        mapToggleBtn.className = showMap ? "toggle-btn active" : "toggle-btn";
+        playStepSound();
+    }
+});
+
+// --- アクション処理関数 ---
+function moveForward() {
+    let nx = player.x + DX[player.dir];
+    let ny = player.y + DY[player.dir];
+    tryMove(nx, ny, "前進した。");
+}
+
+// 後退
+function moveBackward() {
+    let nx = player.x - DX[player.dir];
+    let ny = player.y - DY[player.dir];
+    tryMove(nx, ny, "後退した。");
+}
+
+function turnLeft() {
+    player.dir = (player.dir + 3) % 4;
+    currentMessage = "左を向いた。";
+    playStepSound();
+    triggerActionEffects();
+}
+
+function turnRight() {
+    player.dir = (player.dir + 1) % 4;
+    currentMessage = "右を向いた。";
+    playStepSound();
+    triggerActionEffects();
+}
+
+function triggerActionEffects() {
+    shakeFrames = 4; // 画面を少し揺らす
+}
+
+function tryMove(nx, ny, actionDesc) {
+    if (nx < 0 || nx >= MAP_SIZE || ny < 0 || ny >= MAP_SIZE) {
+        currentMessage = "壁が行く手を阻んでいる。";
+        playBuzzerSound();
+        triggerActionEffects();
+        return;
+    }
+
+    let destType = map[ny][nx];
+
+    // 壁(0)および出口ドア(3)のマスへは直接移動できないように制限（目の前でストップ）
+    if (destType === 0 || destType === 3) {
+        if (destType === 3) {
+            currentMessage = "正面に出口の扉が立ちはだかっている。進めない。";
+        } else {
+            currentMessage = "壁にぶつかった。";
+        }
+        playBuzzerSound();
+        triggerActionEffects();
+        return;
+    }
+
+    // 移動可能
+    player.x = nx;
+    player.y = ny;
+    currentMessage = actionDesc;
+    playStepSound();
+
+    // 移動後、正面のマスに特別なものがあるかスキャンして案内
+    let fx = player.x + DX[player.dir];
+    let fy = player.y + DY[player.dir];
+    if (fx >= 0 && fx < MAP_SIZE && fy >= 0 && fy < MAP_SIZE) {
+        let frontCell = map[fy][fx];
+        if (frontCell === 2 && !hasKey) {
+            currentMessage += " 正面の暗闇に何か光るものが見える。[ACTION] で調べてみよう。";
+        } else if (frontCell === 3) {
+            currentMessage += " 正面に脱出口となる重厚な鉄の扉がある！";
+        }
+    }
+
+    // 移動後の変化テキスト（足元の鍵）
+    let checkCell = map[player.y][player.x];
+    if (checkCell === 2 && !hasKey) {
+        currentMessage += " 足元に金属の鍵が落ちている。[ACTION] で拾える。";
+    }
+
+    triggerActionEffects();
+}
+
+// --- ACTION（調べる・拾う） ---
+function executeAction() {
+    if (gameState === "CLEAR" || gameState === "TITLE") return;
+
+    let currentCell = map[player.y][player.x];
+
+    // 0. 隠し通路の奥の小部屋にいる場合、まだ見ぬ日記（ボーナス要素）を発見できる
+    if (player.x === SECRET_PASSAGE.x && player.y === SECRET_PASSAGE.y && !secretBonusClaimed) {
+        secretBonusClaimed = true;
+        try { localStorage.setItem('greenMonitorEscape_secretFound', '1'); } catch (e) {}
+        currentMessage = "【ACTION】隠し部屋の奥で、埃をかぶった古い日記を見つけた。「……この屋敷には、まだ誰も知らない出口がある」と記されている。";
+        flashFrames = 20;
+        playGetItemSound();
+        triggerActionEffects();
+        return;
+    }
+
+    // 1. そのマス(足元)に鍵がある場合
+    if (currentCell === 2 && !hasKey) {
+        hasKey = true;
+        map[player.y][player.x] = 1; // 回収後は通路(1)にする
+        currentMessage = "【ACTION】足元を調べた。錆びた「大邸宅の鍵」を発見し、手に入れた！";
+        flashFrames = 15;
+        playGetItemSound();
+        triggerActionEffects();
+        return;
+    }
+
+    // 2. 正面のマスにインタラクション対象（鍵、出口扉、隠し通路）がある場合
+    let fx = player.x + DX[player.dir];
+    let fy = player.y + DY[player.dir];
+
+    if (fx >= 0 && fx < MAP_SIZE && fy >= 0 && fy < MAP_SIZE) {
+        let frontCell = map[fy][fx];
+
+        // 隠し通路（初回のみ壁の奥に隠し通路を発見できる）
+        if (fx === SECRET_PASSAGE.x && fy === SECRET_PASSAGE.y && !secretPassageFound) {
+            secretPassageFound = true;
+            map[SECRET_PASSAGE.y][SECRET_PASSAGE.x] = 1;
+            currentMessage = "【ACTION】壁の継ぎ目に指を掛けると、石壁がわずかに軋んで動いた……隠し通路を見つけた！";
+            flashFrames = 15;
+            playGetItemSound();
+            triggerActionEffects();
+            return;
+        }
+
+        if (frontCell === 2) {
+            hasKey = true;
+            map[fy][fx] = 1; 
+            currentMessage = "【ACTION】目の前にある光るものを手に取った。錆びた「大邸宅の鍵」を手に入れた！";
+            flashFrames = 15;
+            playGetItemSound();
+            triggerActionEffects();
+            return;
+        } else if (frontCell === 3) {
+            if (hasKey) {
+                currentMessage = "【ACTION】鍵穴に大邸宅の鍵を差し込み回した。扉が開き、脱出成功だ！";
+                flashFrames = 30;
+
+                // クリアタイムを計測し、ベストタイムを更新・保存する
+                clearTimeSeconds = (performance.now() - playStartTime) / 1000;
+                if (bestTimeSeconds === null || clearTimeSeconds < bestTimeSeconds) {
+                    bestTimeSeconds = clearTimeSeconds;
+                    try { localStorage.setItem('greenMonitorEscape_bestTime', String(bestTimeSeconds)); } catch (e) {}
+                }
+
+                gameState = "CLEAR";
+                playGetItemSound();
+                triggerActionEffects();
+            } else {
+                currentMessage = "【ACTION】扉を押したが、鍵穴が閉ざされている。鍵を探さなければ。";
+                playBuzzerSound();
+                triggerActionEffects();
+            }
+            return;
+        }
+    }
+
+    const searchTexts = [
+        "【ACTION】目の前の暗闇を手探りで調べたが、何もない。",
+        "【ACTION】床を手探りしたが、埃が舞い上がっただけだった。",
+        "【ACTION】周囲を見渡したが、おぞましい石壁が続いているだけだ。"
+    ];
+    currentMessage = searchTexts[Math.floor(Math.random() * searchTexts.length)];
+    playStepSound();
+    triggerActionEffects();
+}
+
+// --- CANCEL ---
+function executeCancel() {
+    if (gameState === "CLEAR" || gameState === "TITLE") return;
+    currentMessage = "周囲への警戒を強めた。";
+    playStepSound();
+    triggerActionEffects();
+}
+
+// --- 描画ロジック ---
+
+function draw() {
+    frameCount++;
+    
+    // 電源オフ、ブラウン管(CRT)起動時はクリアカラーを完全な黒にする
+    if (gameState === "POWER_OFF" || gameState === "BOOT_CRT" || gameState === "BOOT_TEXT") {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        // 通常ゲーム時はCRTならではの残像演出
+        ctx.fillStyle = 'rgba(0, 5, 0, 0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    ctx.save();
+    
+    // 画面シェイク
+    if (shakeFrames > 0 && gameState !== "POWER_OFF" && gameState !== "BOOT_CRT" && gameState !== "BOOT_TEXT") {
+        let dx = (Math.random() - 0.5) * 8;
+        let dy = (Math.random() - 0.5) * 8;
+        ctx.translate(dx, dy);
+        shakeFrames--;
+    }
+
+    // 基本ベクトル描画パラメータ（眩しいネオングリーン）
+    ctx.strokeStyle = '#3ff';
+    ctx.lineWidth = 2.5;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#0a0';
+
+    // ゲーム状態に応じたメイン描画の分岐
+    if (gameState === "POWER_OFF") {
+        drawPowerOffScreen();
+    } else if (gameState === "BOOT_CRT") {
+        drawBootCRT();
+    } else if (gameState === "BOOT_TEXT") {
+        drawBootText();
+    } else if (gameState === "TITLE") {
+        drawTitleScreen();
+    } else if (gameState === "CLEAR") {
+        drawClearScreen();
+    } else {
+        // 通常の疑似3Dワイヤーフレーム
+        drawWireframeView();
+    }
+
+    // 2Dミニマップ表示
+    if (showMap && gameState === "PLAY") {
+        drawMiniMap();
+    }
+
+    // フラッシュ演出
+    if (flashFrames > 0 && gameState !== "BOOT_CRT") {
+        ctx.fillStyle = `rgba(51, 255, 51, ${flashFrames / 30})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        flashFrames--;
+    }
+
+    // 走査線とアナログノイズ
+    drawMonitorNoise();
+
+    ctx.restore();
+
+    // テキスト表示の更新
+    updateTextPanel();
+}
+
+// 主電源OFFの待機画面
+function drawPowerOffScreen() {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    
+    // 本体の電源ランプ（赤くぼんやり消灯、または点滅）
+    ctx.fillStyle = '#100';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 20, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 暗闇の中に浮かび上がるシンプルな主電源案内
+    ctx.fillStyle = '#151';
+    ctx.font = "14px 'MS Gothic', 'Medium Gothic', sans-serif";
+    if (Math.floor(frameCount / 30) % 2 === 0) {
+        ctx.fillText("■ CLICK SCREEN OR TAP BUTTON TO POWER ON ■", cx, cy + 40);
+    }
+    ctx.restore();
+}
+
+// 1. ブラウン管起動 (CRT POWER ON) エフェクト
+function drawBootCRT() {
+    ctx.save();
+    ctx.strokeStyle = '#3ff';
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#3ff';
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    // ブラウン管が温まっていくリアルなウエイト時間
+    if (bootTimer < 100) {
+        // フェーズ1: 画面中央に電子ビームの眩しい光点が出現
+        ctx.fillStyle = '#3ff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (bootTimer < 200) {
+        // フェーズ2: 横一文字にスッと細いラインが広がっていく
+        let progress = (bootTimer - 100) / 100;
+        let lineW = canvas.width * 0.9 * progress;
+        ctx.beginPath();
+        ctx.moveTo(cx - lineW / 2, cy);
+        ctx.lineTo(cx + lineW / 2, cy);
+        ctx.stroke();
+    } else {
+        // フェーズ3: 横線から上下に電子が広がり、画面全体が一瞬強くフラッシュする
+        let progress = (bootTimer - 200) / 60;
+        let lineH = canvas.height * progress;
+        ctx.fillStyle = 'rgba(51, 255, 51, 0.25)';
+        ctx.fillRect(0, cy - lineH/2, canvas.width, lineH);
+
+        ctx.beginPath();
+        ctx.rect(10, cy - lineH/2, canvas.width - 20, lineH);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    bootTimer++;
+    if (bootTimer >= 260) {
+        gameState = "BOOT_TEXT";
+        bootTimer = 0;
+    }
+}
+
+// 2. 起動シークエンス画面 (PC BOOT SEQUENCE - ハドソン風タイピング音＆カセットテープ変調ロード音対応)
+function drawBootText() {
+    ctx.save();
+    ctx.fillStyle = '#3ff';
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = '#3ff';
+    ctx.font = "14px 'Courier New', monospace";
+    ctx.textAlign = 'left';
+
+    // 1行あたりたっぷり80フレーム(約1.3秒)かけてのんびりロード
+    const fpl = 80;
+    let linesToShow = Math.floor(bootTimer / fpl);
+    if (linesToShow > BOOT_MESSAGES.length) {
+        linesToShow = BOOT_MESSAGES.length;
+    }
+
+    // ★ カセットロード音が鳴り始めるトリガー判定（サッポロ・シティ・スタンダード）
+    // BOOT_MESSAGES[7] から BOOT_MESSAGES[10] のデータロードを行っている期間に、あのテープ音を再生
+    if (linesToShow >= 7 && linesToShow <= 10) {
+        if (!tapeLoadOsc) {
+            startTapeLoadSound();
+        }
+    } else {
+        // ロード終了、または別のシーケンスに移ったら音を止める
+        stopTapeLoadSound();
+    }
+
+    // 改行（新ライン移行）の瞬間に少し低めの制御音を鳴らす
+    if (linesToShow !== lastLineIndex) {
+        lastLineIndex = linesToShow;
+        if (linesToShow < BOOT_MESSAGES.length) {
+            playRetroLineSound();
+        }
+    }
+
+    let y = 40;
+    for (let i = 0; i < linesToShow; i++) {
+        ctx.fillText(BOOT_MESSAGES[i], 30, y);
+        y += 26;
+    }
+
+    // 途中の最新行にカーソルを点滅させつつ「テキストタイピング音」をトリガー
+    if (linesToShow < BOOT_MESSAGES.length) {
+        let currentFullText = BOOT_MESSAGES[linesToShow];
+        let intraLineProgress = (bootTimer % fpl) / fpl; // この行のタイピング進捗 (0.0〜1.0)
+        let charCount = Math.floor(currentFullText.length * intraLineProgress);
+        let partialText = currentFullText.substring(0, charCount);
+
+        ctx.fillText(partialText, 30, y);
+        let currentLineWidth = ctx.measureText(partialText).width;
+        ctx.fillText("■", 30 + currentLineWidth, y);
+
+        // 新しい文字が描画された瞬間を検知してレトロPCタイピングBEEP音を鳴らす
+        if (charCount !== lastCharCount) {
+            lastCharCount = charCount;
+            // 空白文字（スペース）以外、かつ文字が存在する時に鳴らす
+            if (charCount > 0 && currentFullText.charAt(charCount - 1) !== ' ') {
+                playRetroCharSound();
+            }
+        }
+    } else {
+        // 全行出力完了後に点滅カーソルを表示
+        if (Math.floor(frameCount / 15) % 2 === 0) {
+            ctx.fillText("■", 30, y);
+        }
+    }
+    ctx.restore();
+
+    bootTimer++;
+    // 全メッセージ出力完了から、少しの余韻を経てタイトル画面へ
+    if (bootTimer >= BOOT_MESSAGES.length * fpl + 120) {
+        gameState = "TITLE";
+        bootTimer = 0;
+        currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+    }
+}
+
+// タイトル画面の描画
+function drawTitleScreen() {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+
+    // 1. メインタイトルロゴ
+    ctx.fillStyle = '#3ff';
+    ctx.font = "bold 28px 'Courier New'";
+    ctx.fillText("WIREFRAME ESCAPE", cx, 65);
+
+    ctx.strokeStyle = '#1a5a1a';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(40, 20, canvas.width - 80, 65);
+
+    // 2. 不気味な洋館の3Dワイヤーフレームアニメーション
+    drawWireframeHouse(cx, cy + 30, 60);
+
+    // 3. PUSH ANY KEYの点滅表示
+    if (Math.floor(frameCount / 20) % 2 === 0) {
+        ctx.fillStyle = '#3ff';
+        ctx.font = "bold 14px 'Courier New'";
+        ctx.fillText("■ PUSH ANY KEY OR TAP SCREEN ■", cx, cy + 130);
+    }
+
+    // 下部サブ情報
+    ctx.fillStyle = '#1a6a1a';
+    ctx.font = "9px 'Courier New'";
+    ctx.fillText("CLOCK: 4.00MHz / SHARP GREEN PHOSPHOR MONITOR SYSTEM", cx, cy + 160);
+
+    ctx.restore();
+}
+
+// タイトルデモ用の3Dワイヤーフレームハウス（洋館）描画関数
+function drawWireframeHouse(cx, cy, size) {
+    ctx.save();
+    ctx.strokeStyle = '#3ff';
+    ctx.shadowColor = '#0a0';
+    ctx.lineWidth = 1.5;
+
+    // Y軸とX軸のゆっくりとした回転角
+    let angleY = frameCount * 0.02;
+    let angleX = 0.25 + Math.sin(frameCount * 0.01) * 0.1; // 見下ろし視点を少し変化させる
+
+    // 洋館モデルの頂点（3D座標）
+    // 下部立方体（家の胴体）
+    const half = size;
+    const hHalf = size * 0.6;
+    let vertices = [
+        // 胴体下部 (0-3)
+        {x: -half, y: hHalf, z: -half},
+        {x: half, y: hHalf, z: -half},
+        {x: half, y: hHalf, z: half},
+        {x: -half, y: hHalf, z: half},
+        // 胴体中部（軒先高さ） (4-7)
+        {x: -half, y: -hHalf * 0.4, z: -half},
+        {x: half, y: -hHalf * 0.4, z: -half},
+        {x: half, y: -hHalf * 0.4, z: half},
+        {x: -half, y: -hHalf * 0.4, z: half},
+        // 屋根の頂点 (8) - ピラミッド型
+        {x: 0, y: -hHalf * 1.6, z: 0},
+        // 煙突 (9-10)
+        {x: half * 0.5, y: -hHalf * 0.4, z: -half * 0.5},
+        {x: half * 0.5, y: -hHalf * 1.3, z: -half * 0.5}
+    ];
+
+    // 頂点の3D回転とスクリーンへの2D投影
+    let projected = vertices.map(v => {
+        // Y軸回転
+        let cosY = Math.cos(angleY);
+        let sinY = Math.sin(angleY);
+        let x1 = v.x * cosY - v.z * sinY;
+        let z1 = v.x * sinY + v.z * cosY;
+
+        // X軸回転
+        let cosX = Math.cos(angleX);
+        let sinX = Math.sin(angleX);
+        let y2 = v.y * cosX - z1 * sinX;
+        let z2 = v.y * sinX + z1 * cosX;
+
+        // 簡易遠近投影 (パースペクティブ)
+        let distance = 250;
+        let pScale = distance / (distance + z2);
+        
+        return {
+            x: cx + x1 * pScale,
+            y: cy + y2 * pScale
+        };
+    });
+
+    // 接続線の描画
+    // 胴体下部四角形
+    drawPolygon(projected, [0, 1, 2, 3]);
+    // 胴体中部四角形
+    drawPolygon(projected, [4, 5, 6, 7]);
+    // 縦の柱
+    line(projected[0].x, projected[0].y, projected[4].x, projected[4].y);
+    line(projected[1].x, projected[1].y, projected[5].x, projected[5].y);
+    line(projected[2].x, projected[2].y, projected[6].x, projected[6].y);
+    line(projected[3].x, projected[3].y, projected[7].x, projected[7].y);
+
+    // 屋根
+    line(projected[4].x, projected[4].y, projected[8].x, projected[8].y);
+    line(projected[5].x, projected[5].y, projected[8].x, projected[8].y);
+    line(projected[6].x, projected[6].y, projected[8].x, projected[8].y);
+    line(projected[7].x, projected[7].y, projected[8].x, projected[8].y);
+
+    // 煙突の描画
+    line(projected[9].x, projected[9].y, projected[10].x, projected[10].y);
+    
+    // ドアと窓のワイヤー装飾
+    let dx1 = (projected[0].x + projected[1].x) * 0.5 - 10;
+    let dx2 = (projected[0].x + projected[1].x) * 0.5 + 10;
+    let dy1 = (projected[0].y + projected[1].y) * 0.5;
+    let dy2 = (projected[4].y + projected[5].y) * 0.5 + 10;
+    ctx.strokeRect(dx1, dy2, dx2 - dx1, dy1 - dy2);
+
+    ctx.restore();
+}
+
+function drawPolygon(points, indices) {
+    ctx.beginPath();
+    ctx.moveTo(points[indices[0]].x, points[indices[0]].y);
+    for (let i = 1; i < indices.length; i++) {
+        ctx.lineTo(points[indices[i]].x, points[indices[i]].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+}
+
+// ゲームクリア画面
+function drawClearScreen() {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    ctx.save();
+    ctx.strokeStyle = '#3ff';
+    ctx.fillStyle = '#3ff';
+    ctx.textAlign = 'center';
+
+    ctx.font = "bold 32px 'Courier New'";
+    ctx.fillText("=== ESCAPE COMPLETE ===", cx, cy - 40);
+
+    ctx.font = "16px 'Courier New'";
+    ctx.fillText("CONGRATULATIONS!", cx, cy + 10);
+    ctx.fillText("YOU ESCAPED FROM THE MANSION.", cx, cy + 35);
+
+    // タイムアタック結果表示
+    ctx.font = "14px 'Courier New'";
+    if (clearTimeSeconds !== null) {
+        ctx.fillText(`CLEAR TIME: ${clearTimeSeconds.toFixed(2)} SEC`, cx, cy + 58);
+    }
+    if (bestTimeSeconds !== null) {
+        ctx.fillText(`BEST TIME: ${bestTimeSeconds.toFixed(2)} SEC`, cx, cy + 76);
+    }
+
+    // 点滅メッセージ
+    if (Math.floor(frameCount / 15) % 2 === 0) {
+        ctx.font = "bold 12px 'Courier New'";
+        ctx.fillText("PRESS ACTION OR TAP TO RESTART", cx, cy + 100);
+    }
+
+    // 回転立方体
+    let angle = frameCount * 0.02;
+    let size = 45;
+    ctx.translate(cx, cy + 145);
+    ctx.rotate(angle);
+    ctx.rotate(angle * 0.4);
+    ctx.beginPath();
+    ctx.rect(-size/2, -size/2, size, size);
+    ctx.stroke();
+    ctx.restore();
+}
+
+// 疑似3Dマップのレンダリング
+function drawWireframeView() {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const w = canvas.width / 2;
+    const h = canvas.height / 2;
+
+    for (let d = 3; d >= 0; d--) {
+        let tx = player.x + DX[player.dir] * d;
+        let ty = player.y + DY[player.dir] * d;
+
+        // 範囲外は壁として遮断
+        if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) {
+            drawClosedWall(cx, cy, w, h, d);
+            continue;
+        }
+
+        let cell = map[ty][tx];
+
+        let scale = 1 / (d + 1);
+        let nextScale = 1 / (d + 2);
+
+        let x1 = cx - w * scale;
+        let x2 = cx + w * scale;
+        let y1 = cy - h * scale;
+        let y2 = cy + h * scale;
+
+        let nx1 = cx - w * nextScale;
+        let nx2 = cx + w * nextScale;
+        let ny1 = cy - h * nextScale;
+        let ny2 = cy + h * nextScale;
+
+        // 正面が壁
+        if (cell === 0) {
+            drawClosedWall(cx, cy, w, h, d);
+            continue;
+        }
+
+        // 側壁の計算
+        let leftDir = (player.dir + 3) % 4;
+        let lx = tx + DX[leftDir];
+        let ly = ty + DY[leftDir];
+        let leftCell = (lx < 0 || lx >= MAP_SIZE || ly < 0 || ly >= MAP_SIZE) ? 0 : map[ly][lx];
+
+        if (leftCell === 0) {
+            line(x1, y1, nx1, ny1);
+            line(x1, y2, nx1, ny2);
+        } else {
+            line(x1, y1, x1, ny1);
+            line(x1, y2, x1, ny2);
+            line(x1, ny1, nx1, ny1);
+            line(x1, ny2, nx1, ny2);
+        }
+
+        let rightDir = (player.dir + 1) % 4;
+        let rx = tx + DX[rightDir];
+        let ry = ty + DY[rightDir];
+        let rightCell = (rx < 0 || rx >= MAP_SIZE || ry < 0 || ry >= MAP_SIZE) ? 0 : map[ry][rx];
+
+        if (rightCell === 0) {
+            line(x2, y1, nx2, ny1);
+            line(x2, y2, nx2, ny2);
+        } else {
+            line(x2, y1, x2, ny1);
+            line(x2, y2, x2, ny2);
+            line(x2, ny1, nx2, ny1);
+            line(x2, ny2, nx2, ny2);
+        }
+
+        // 天井と床のライン
+        line(x1, y1, nx1, ny1);
+        line(x2, y1, nx2, ny1);
+        line(x1, y2, nx1, ny2);
+        line(x2, y2, nx2, ny2);
+
+        // アイテムやドアの描画
+        if (cell === 2 && !hasKey) {
+            drawWireKey(cx, cy + 20 * scale, 35 * scale);
+        }
+
+        if (cell === 3) {
+            drawWireDoor(cx, cy, scale);
+        }
+    }
+
+    // 外枠の遮光線
+    ctx.strokeStyle = '#040';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+}
+
+// 突き当りの正面壁
+function drawClosedWall(cx, cy, w, h, d) {
+    let scale = 1 / (d + 1);
+    let x1 = cx - w * scale;
+    let x2 = cx + w * scale;
+    let y1 = cy - h * scale;
+    let y2 = cy + h * scale;
+
+    ctx.beginPath();
+    ctx.rect(x1, y1, x2 - x1, y2 - y1);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.moveTo(x2, y1); ctx.lineTo(x1, y2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#3ff';
+    ctx.lineWidth = 2.5;
+}
+
+// 鍵オブジェクト（3D回転ワイヤーフレーム）
+function drawWireKey(x, y, size) {
+    ctx.save();
+    ctx.strokeStyle = '#5f5';
+    ctx.shadowColor = '#5f5';
+    ctx.lineWidth = 1.5;
+
+    let angle = frameCount * 0.05;
+    let bob = Math.sin(frameCount * 0.1) * (size * 0.15);
+    let cy = y + bob;
+
+    let r = size * 0.7;
+    let rx = r * Math.cos(angle);
+    let rz = r * Math.sin(angle);
+
+    let p = [
+        {x: x, y: cy - r},
+        {x: x + rx, y: cy},
+        {x: x + rz, y: cy - r * 0.2},
+        {x: x - rx, y: cy},
+        {x: x - rz, y: cy + r * 0.2},
+        {x: x, y: cy + r}
+    ];
+
+    for (let i = 1; i <= 4; i++) {
+        let next = (i % 4) + 1;
+        line(p[0].x, p[0].y, p[i].x, p[i].y);
+        line(p[i].x, p[i].y, p[next].x, p[next].y);
+        line(p[5].x, p[5].y, p[i].x, p[i].y);
+    }
+
+    ctx.fillStyle = '#5f5';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText("[KEY]", x, cy - r - 10);
+
+    ctx.restore();
+}
+
+// 脱出扉（EXIT）
+function drawWireDoor(cx, cy, scale) {
+    ctx.save();
+    ctx.strokeStyle = '#f55';
+    ctx.shadowColor = '#f55';
+    ctx.lineWidth = 2.5 * scale;
+
+    let w = 90 * scale;
+    let h = 140 * scale;
+    let x = cx - w / 2;
+    let y = cy - h / 3;
+
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.beginPath();
+    ctx.lineWidth = 1.5 * scale;
+    for (let i = 1; i < 4; i++) {
+        let lx = x + (w / 4) * i;
+        ctx.moveTo(lx, y);
+        ctx.lineTo(lx, y + h);
+    }
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f55';
+    ctx.font = `bold ${Math.max(10, 15 * scale)}px 'Courier New'`;
+    ctx.textAlign = 'center';
+    ctx.fillText("EXIT DOOR", cx, y - 12);
+
+    ctx.restore();
+}
+
+// 直線描画
+function line(x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+
+// 2Dミニマップ
+function drawMiniMap() {
+    ctx.save();
+    ctx.strokeStyle = '#1a5a1a';
+    ctx.fillStyle = '#051505';
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 0;
+
+    const startX = 20;
+    const startY = 20;
+    const size = 12;
+
+    ctx.fillRect(startX, startY, MAP_SIZE * size, MAP_SIZE * size);
+    ctx.strokeRect(startX, startY, MAP_SIZE * size, MAP_SIZE * size);
+
+    for (let r = 0; r < MAP_SIZE; r++) {
+        for (let c = 0; c < MAP_SIZE; c++) {
+            let cell = map[r][c];
+            let bx = startX + c * size;
+            let by = startY + r * size;
+
+            if (cell === 0) {
+                ctx.fillStyle = '#102d10';
+                ctx.fillRect(bx + 1, by + 1, size - 2, size - 2);
+            } else if (cell === 2 && !hasKey) {
+                ctx.fillStyle = '#3f3';
+                ctx.fillRect(bx + 3, by + 3, size - 6, size - 6);
+            } else if (cell === 3) {
+                ctx.fillStyle = '#f55';
+                ctx.fillRect(bx + 1, by + 1, size - 2, size - 2);
+            }
+        }
+    }
+
+    // プレイヤー向き（三角）
+    ctx.fillStyle = '#3ff';
+    let px = startX + player.x * size + size / 2;
+    let py = startY + player.y * size + size / 2;
+    let r = size * 0.4;
+
+    ctx.beginPath();
+    ctx.moveTo(px + DX[player.dir] * r, py + DY[player.dir] * r);
+    let backLeft = (player.dir + 3) % 4;
+    let backRight = (player.dir + 1) % 4;
+    ctx.lineTo(px - DX[player.dir] * (r * 0.5) + DX[backLeft] * (r * 0.5), py - DY[player.dir] * (r * 0.5) + DY[backLeft] * (r * 0.5));
+    ctx.lineTo(px - DX[player.dir] * (r * 0.5) + DX[backRight] * (r * 0.5), py - DY[player.dir] * (r * 0.5) + DY[backRight] * (r * 0.5));
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
+// 走査線ノイズ
+function drawMonitorNoise() {
+    ctx.save();
+    ctx.shadowBlur = 0;
+
+    let scanY = (frameCount * 1.5) % canvas.height;
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.03)';
+    ctx.fillRect(0, scanY, canvas.width, 20);
+
+    let flicker = Math.sin(frameCount * 0.3) * 0.01 + Math.random() * 0.008;
+    ctx.fillStyle = `rgba(0, 255, 0, ${0.02 + flicker})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.restore();
+}
+
+// テキスト情報の印字
+let displayedText = "";
+let targetText = "";
+function updateTextPanel() {
+    let locationInfo = "";
+    if (gameState === "POWER_OFF") {
+        locationInfo = "■ POWER: OFF ■ READY TO BOOT";
+        targetText = "主電源スイッチをONにしてください (タップまたはキー入力)。";
+    } else if (gameState === "BOOT_CRT") {
+        locationInfo = "■ CRT POWERING ON... ■ SYSTEM CHECK";
+        targetText = "電子ビーム照射テスト中... しばらくお待ちください。";
+    } else if (gameState === "BOOT_TEXT") {
+        locationInfo = "■ BIOS BOOT PROCESS ■ LOADING DRIVERS";
+        targetText = "レトロPCブートローダー実行中... キーを押すと即スキップします。";
+    } else if (gameState === "TITLE") {
+        locationInfo = "■ BIOS V1.02 ■ GRAPHICS: ON ■ DRIVE: A: LOADED";
+        targetText = "READY... PUSH ANY KEY OR TAP DISPLAY TO LAUNCH SYSTEM.";
+    } else if (gameState === "CLEAR") {
+        locationInfo = "■ MISSION CLEARED ■ ESCAPED! ■ CONGRATULATIONS";
+        targetText = "無事脱出に成功した！もう一度挑戦するには決定ボタンまたは画面をタップ。";
+    } else {
+        let dirStr = DIR_NAMES[player.dir];
+        locationInfo = `■ 座標: [${player.x}, ${player.y}]  ■ 探索方向: 【${dirStr}】  ■ 鍵: ${hasKey ? "所持 [GATE KEY]" : "未所持"}`;
+        targetText = currentMessage;
+    }
+
+    document.getElementById('location-info').innerText = locationInfo;
+
+    if (targetText !== currentMessage && gameState === "PLAY") {
+        // PLAY中は1文字ずつタイプライター風
+        if (displayedText.length < targetText.length) {
+            displayedText += targetText.charAt(displayedText.length);
+        }
+    } else {
+        // その他の状態では一瞬で出す
+        displayedText = targetText;
+    }
+
+    let displayStr = displayedText;
+    if (Math.floor(frameCount / 10) % 2 === 0) {
+        displayStr += " _";
+    }
+    document.getElementById('narrator-text').innerText = displayStr;
+}
+
+// ループ駆動
+function gameLoop() {
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+window.onload = function() {
+    gameLoop();
+};
+</script>
+</body>
+</html>
