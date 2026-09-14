@@ -1603,6 +1603,7 @@ function drawMonitorNoise() {
 // テキスト情報の印字
 let displayedText = "";
 let targetText = "";
+let previousTargetText = "";
 function updateTextPanel() {
     let locationInfo = "";
     if (gameState === "POWER_OFF") {
@@ -1628,15 +1629,19 @@ function updateTextPanel() {
 
     document.getElementById('location-info').innerText = locationInfo;
 
-    if (targetText !== currentMessage && gameState === "PLAY") {
-        // PLAY中は1文字ずつタイプライター風
-        if (displayedText.length < targetText.length) {
+    if (gameState === "PLAY") {
+        // 新しいメッセージは先頭から表示し、2フレームごとに1文字進める
+        if (targetText !== previousTargetText) {
+            displayedText = "";
+        }
+        if (frameCount % 2 === 0 && displayedText.length < targetText.length) {
             displayedText += targetText.charAt(displayedText.length);
         }
     } else {
         // その他の状態では一瞬で出す
         displayedText = targetText;
     }
+    previousTargetText = targetText;
 
     let displayStr = displayedText;
     if (Math.floor(frameCount / 10) % 2 === 0) {
