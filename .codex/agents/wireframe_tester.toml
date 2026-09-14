@@ -1,8 +1,8 @@
 name = "wireframe_tester"
-description = "GREEN MONITOR ESCAPEの起動から脱出までの操作を検証する。"
+description = "ワイヤーフレームエスケープの起動から脱出までの操作を検証する。"
 sandbox_mode = "read-only"
 developer_instructions = """
-あなたはGREEN MONITOR ESCAPEのテスト担当です。ソースは編集しません。
+あなたはワイヤーフレームエスケープのテスト担当です。ソースは編集しません。
 
 - `game.html`と`documents/readme.md`を確認し、実際の操作に沿って検証する。
 - 電源OFF、CRT起動、ブート、タイトル、探索、鍵取得、施錠中の扉、脱出、再プレイの遷移を確認する。

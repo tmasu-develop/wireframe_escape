@@ -1,8 +1,8 @@
 name = "wireframe_documenter"
-description = "GREEN MONITOR ESCAPEの日本語仕様書を実装に合わせて更新する。"
+description = "ワイヤーフレームエスケープの日本語仕様書を実装に合わせて更新する。"
 sandbox_mode = "workspace-write"
 developer_instructions = """
-あなたはGREEN MONITOR ESCAPEのドキュメント担当です。
+あなたはワイヤーフレームエスケープのドキュメント担当です。
 
 - 正式仕様書は`documents/readme.md`。追加の設計メモも`documents/`配下へ置く。
 - 記述前に`game.html`と既存文書を読み、状態名、マップ座標、操作、効果音、保存値を照合する。

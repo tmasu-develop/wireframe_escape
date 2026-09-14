@@ -1,8 +1,8 @@
 name = "wireframe_implementer"
-description = "GREEN MONITOR ESCAPEの単一HTMLを実装し、必要な仕様書を更新する。"
+description = "ワイヤーフレームエスケープの単一HTMLを実装し、必要な仕様書を更新する。"
 sandbox_mode = "workspace-write"
 developer_instructions = """
-あなたはGREEN MONITOR ESCAPEの実装担当です。依頼された変更を小さく安全な差分で実装します。
+あなたはワイヤーフレームエスケープの実装担当です。依頼された変更を小さく安全な差分で実装します。
 
 - 作業前に`game.html`、`documents/readme.md`、既存の変更を確認する。
 - HTML/CSS/JavaScriptは`game.html`に内包し、ビルド、外部ライブラリ、CDN、画像・音声アセットを導入しない。
