@@ -377,7 +377,10 @@ let audioCtx = null;
 // カセットテープ（サッポロ・シティ・スタンダード）ロード音生成用
 let tapeLoadOsc = null;
 let tapeLoadNoise = null;
+let tapeLoadNoiseGain = null;
 let tapeLoadGain = null;
+let tapeLoadMod = null;
+let tapeLoadModGain = null;
 let tapeLoadInterval = null;
 
 function initAudio() {
@@ -476,38 +479,38 @@ function startTapeLoadSound() {
         tapeLoadNoise.buffer = noiseBuffer;
         tapeLoadNoise.loop = true;
         
-        let noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.012, audioCtx.currentTime); // 小さめのホワイトノイズ
+        tapeLoadNoiseGain = audioCtx.createGain();
+        tapeLoadNoiseGain.gain.setValueAtTime(0.012, audioCtx.currentTime); // 小さめのホワイトノイズ
 
         // 2. FSK（周波数シフトキーイング）変調オシレーター
         tapeLoadOsc = audioCtx.createOscillator();
         tapeLoadOsc.type = 'sine';
         
         // 3. データパルス（ピロピロ音）をシミュレートするLFO
-        let mod = audioCtx.createOscillator();
-        let modGain = audioCtx.createGain();
-        mod.type = 'square';
-        mod.frequency.setValueAtTime(45, audioCtx.currentTime); // 45Hzのデータパルス
+        tapeLoadMod = audioCtx.createOscillator();
+        tapeLoadModGain = audioCtx.createGain();
+        tapeLoadMod.type = 'square';
+        tapeLoadMod.frequency.setValueAtTime(45, audioCtx.currentTime); // 45Hzのデータパルス
         
         // 1800Hzを中心に揺らすことで、スペース信号(1200Hz)とマーク信号(2400Hz)をエミュレート (1800±600)
         tapeLoadOsc.frequency.setValueAtTime(1800, audioCtx.currentTime);
-        modGain.gain.setValueAtTime(600, audioCtx.currentTime);
+        tapeLoadModGain.gain.setValueAtTime(600, audioCtx.currentTime);
         
         tapeLoadGain = audioCtx.createGain();
         tapeLoadGain.gain.setValueAtTime(0.035, audioCtx.currentTime);
         
         // 接続
-        mod.connect(modGain);
-        modGain.connect(tapeLoadOsc.frequency);
+        tapeLoadMod.connect(tapeLoadModGain);
+        tapeLoadModGain.connect(tapeLoadOsc.frequency);
         
-        tapeLoadNoise.connect(noiseGain);
-        noiseGain.connect(audioCtx.destination);
+        tapeLoadNoise.connect(tapeLoadNoiseGain);
+        tapeLoadNoiseGain.connect(audioCtx.destination);
         
         tapeLoadOsc.connect(tapeLoadGain);
         tapeLoadGain.connect(audioCtx.destination);
         
         // 再生開始
-        mod.start();
+        tapeLoadMod.start();
         tapeLoadNoise.start();
         tapeLoadOsc.start();
         
@@ -517,19 +520,20 @@ function startTapeLoadSound() {
             let now = audioCtx.currentTime;
             
             // LFOのレートをランダムに変化させデジタルパルスを模倣
-            mod.frequency.setValueAtTime(25 + Math.random() * 60, now);
+            tapeLoadMod.frequency.setValueAtTime(25 + Math.random() * 60, now);
             
             // 時々発生するマーク信号のみのパイロットトーン（ピーという単一音）
             if (Math.random() < 0.20) {
-                modGain.gain.setValueAtTime(0, now);
+                tapeLoadModGain.gain.setValueAtTime(0, now);
                 tapeLoadOsc.frequency.setValueAtTime(2400, now); // 2400Hzの一定音
             } else {
-                modGain.gain.setValueAtTime(600, now);
+                tapeLoadModGain.gain.setValueAtTime(600, now);
                 tapeLoadOsc.frequency.setValueAtTime(1800, now);
             }
         }, 120);
 
     } catch(e) {
+        stopTapeLoadSound();
         console.error(e);
     }
 }
@@ -540,22 +544,21 @@ function stopTapeLoadSound() {
         clearInterval(tapeLoadInterval);
         tapeLoadInterval = null;
     }
-    try {
-        if (tapeLoadOsc) {
-            tapeLoadOsc.stop();
-            tapeLoadOsc.disconnect();
-            tapeLoadOsc = null;
-        }
-        if (tapeLoadNoise) {
-            tapeLoadNoise.stop();
-            tapeLoadNoise.disconnect();
-            tapeLoadNoise = null;
-        }
-        if (tapeLoadGain) {
-            tapeLoadGain.disconnect();
-            tapeLoadGain = null;
-        }
-    } catch(e) {}
+    // 各ノードを個別に止め、1つが停止済みでも残りを確実に解放する
+    for (const source of [tapeLoadMod, tapeLoadOsc, tapeLoadNoise]) {
+        if (!source) continue;
+        try { source.stop(); } catch(e) {}
+        try { source.disconnect(); } catch(e) {}
+    }
+    for (const gain of [tapeLoadModGain, tapeLoadGain, tapeLoadNoiseGain]) {
+        if (gain) gain.disconnect();
+    }
+    tapeLoadMod = null;
+    tapeLoadOsc = null;
+    tapeLoadNoise = null;
+    tapeLoadModGain = null;
+    tapeLoadGain = null;
+    tapeLoadNoiseGain = null;
 }
 
 // 鍵を入手したときのレトロファンファーレ
