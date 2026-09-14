@@ -209,9 +209,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
             margin-top: 10px;
             width: 100%;
             padding: 0 5px;
+        }
+
+        .footer-controls {
+            display: flex;
+            gap: 8px;
         }
 
         .instructions {
@@ -282,13 +289,16 @@
         </div>
     </div>
 
-    <!-- フッター補助メニュー（操作説明 ＆ ミニマップ切替） -->
+    <!-- フッター補助メニュー（操作説明・ミニマップ・BGM切替） -->
     <div class="footer-menu">
         <div class="instructions">
             PCキーボード対応: 矢印キーで移動<br>
             [Z] でACTION / [X] でCANCEL
         </div>
-        <button class="toggle-btn" id="map-toggle">MINI MAP: OFF</button>
+        <div class="footer-controls">
+            <button class="toggle-btn" id="map-toggle">MINI MAP: OFF</button>
+            <button class="toggle-btn active" id="bgm-toggle" aria-pressed="true">BGM: ON</button>
+        </div>
     </div>
 </div>
 
@@ -383,6 +393,23 @@ let tapeLoadMod = null;
 let tapeLoadModGain = null;
 let tapeLoadInterval = null;
 
+// 探索中の不穏なBGM用ノード
+let bgmMaster = null;
+let bgmVoices = [];
+let bgmVoiceGains = [];
+let bgmPulse = null;
+let bgmPulseGain = null;
+let bgmNoteInterval = null;
+let bgmNoteIndex = 0;
+let bgmEnabled = true;
+
+// クリア画面のPSG風3声BGM用ノード
+let clearBgmMaster = null;
+let clearBgmVoices = [];
+let clearBgmGains = [];
+let clearBgmInterval = null;
+let clearBgmStep = 0;
+
 function initAudio() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -390,6 +417,147 @@ function initAudio() {
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
+}
+
+// 近接した低音のうなりと、ゆっくり移ろう高音で不穏な空気を作る
+function startEerieBgm() {
+    if (!bgmEnabled || bgmMaster || !audioCtx) return;
+    try {
+        const now = audioCtx.currentTime;
+        bgmMaster = audioCtx.createGain();
+        bgmMaster.gain.setValueAtTime(0.035, now);
+        bgmMaster.connect(audioCtx.destination);
+
+        const tones = [
+            { frequency: 110, volume: 0.4, type: 'triangle' },
+            { frequency: 116.54, volume: 0.22, type: 'sine' },
+            { frequency: 164.81, volume: 0.16, type: 'sine' }
+        ];
+        for (const tone of tones) {
+            const voice = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            bgmVoices.push(voice);
+            bgmVoiceGains.push(gain);
+            voice.type = tone.type;
+            voice.frequency.setValueAtTime(tone.frequency, now);
+            gain.gain.setValueAtTime(tone.volume, now);
+            voice.connect(gain);
+            gain.connect(bgmMaster);
+            voice.start();
+        }
+
+        bgmPulse = audioCtx.createOscillator();
+        bgmPulseGain = audioCtx.createGain();
+        bgmPulse.type = 'sine';
+        bgmPulse.frequency.setValueAtTime(0.12, now);
+        bgmPulseGain.gain.setValueAtTime(0.012, now);
+        bgmPulse.connect(bgmPulseGain);
+        bgmPulseGain.connect(bgmMaster.gain);
+        bgmPulse.start();
+
+        const notes = [164.81, 155.56, 185.00, 146.83];
+        bgmNoteIndex = 0;
+        bgmNoteInterval = setInterval(() => {
+            if (!bgmMaster || !audioCtx) return;
+            bgmNoteIndex = (bgmNoteIndex + 1) % notes.length;
+            bgmVoices[2].frequency.setTargetAtTime(notes[bgmNoteIndex], audioCtx.currentTime, 1.2);
+        }, 3200);
+    } catch (e) {
+        stopBgm();
+        console.error(e);
+    }
+}
+
+function startHappyClearBgm() {
+    stopBgm();
+    if (!bgmEnabled || !audioCtx) return;
+    try {
+        const now = audioCtx.currentTime;
+        clearBgmMaster = audioCtx.createGain();
+        clearBgmMaster.gain.setValueAtTime(0.07, now);
+        clearBgmMaster.connect(audioCtx.destination);
+
+        // 矩形波3声で、明るいハ長調のメロディー・伴奏・低音を鳴らす
+        for (let i = 0; i < 3; i++) {
+            const voice = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            clearBgmVoices.push(voice);
+            clearBgmGains.push(gain);
+            voice.type = 'square';
+            gain.gain.setValueAtTime(0.001, now);
+            voice.connect(gain);
+            gain.connect(clearBgmMaster);
+            voice.start();
+        }
+
+        const melody = [523.25, 659.25, 783.99, 1046.50, 880.00, 783.99, 659.25, 783.99,
+                        698.46, 880.00, 1046.50, 880.00, 783.99, 659.25, 587.33, 523.25];
+        const harmony = [261.63, 392.00, 329.63, 392.00, 349.23, 440.00, 349.23, 440.00,
+                         349.23, 440.00, 349.23, 440.00, 392.00, 493.88, 392.00, 493.88];
+        const bass = [130.81, 0, 0, 0, 174.61, 0, 0, 0,
+                      174.61, 0, 0, 0, 196.00, 0, 0, 0];
+        clearBgmStep = 0;
+        const playStep = () => {
+            if (!clearBgmMaster || !audioCtx) return;
+            const now = audioCtx.currentTime;
+            const step = clearBgmStep % melody.length;
+            const notes = [melody[step], harmony[step], bass[step]];
+            const volumes = [0.25, 0.09, 0.14];
+            for (let i = 0; i < notes.length; i++) {
+                if (!notes[i]) continue;
+                const gain = clearBgmGains[i].gain;
+                const duration = i === 2 ? 0.7 : 0.18;
+                clearBgmVoices[i].frequency.setValueAtTime(notes[i], now);
+                gain.cancelScheduledValues(now);
+                gain.setValueAtTime(0.001, now);
+                gain.linearRampToValueAtTime(volumes[i], now + 0.012);
+                gain.exponentialRampToValueAtTime(0.001, now + duration);
+            }
+            clearBgmStep++;
+        };
+        playStep();
+        clearBgmInterval = setInterval(playStep, 200);
+    } catch (e) {
+        stopBgm();
+        console.error(e);
+    }
+}
+
+function stopBgm() {
+    if (clearBgmInterval !== null) {
+        clearInterval(clearBgmInterval);
+        clearBgmInterval = null;
+    }
+    for (const source of clearBgmVoices) {
+        try { source.stop(); } catch (e) {}
+        try { source.disconnect(); } catch (e) {}
+    }
+    for (const gain of [...clearBgmGains, clearBgmMaster]) {
+        if (!gain) continue;
+        try { gain.disconnect(); } catch (e) {}
+    }
+    clearBgmVoices = [];
+    clearBgmGains = [];
+    clearBgmMaster = null;
+
+    if (bgmNoteInterval !== null) {
+        clearInterval(bgmNoteInterval);
+        bgmNoteInterval = null;
+    }
+    for (const source of [...bgmVoices, bgmPulse]) {
+        if (!source) continue;
+        try { source.stop(); } catch (e) {}
+        try { source.disconnect(); } catch (e) {}
+    }
+    for (const gain of [...bgmVoiceGains, bgmPulseGain, bgmMaster]) {
+        if (!gain) continue;
+        try { gain.disconnect(); } catch (e) {}
+    }
+    bgmVoices = [];
+    bgmVoiceGains = [];
+    bgmPulse = null;
+    bgmPulseGain = null;
+    bgmMaster = null;
 }
 
 // 主電源ONの「パチンッ」という心地よいアナログスイッチ音
@@ -636,6 +804,13 @@ function powerOn() {
     }
 }
 
+// クリア画面から戻る操作を一箇所に集め、BGMを確実に止める
+function returnToTitle() {
+    stopBgm();
+    gameState = "TITLE";
+    currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+}
+
 // --- ゲーム開始用処理 ---
 function startExploring() {
     // 起動シーケンス中の割り込みスキップ、またはタイトルからの開始
@@ -647,6 +822,7 @@ function startExploring() {
     if (gameState === "BOOT_CRT" || gameState === "BOOT_TEXT" || gameState === "TITLE") {
         initAudio();
         gameState = "PLAY";
+        startEerieBgm();
         hasKey = false;
         player.x = 1;
         player.y = 1;
@@ -687,8 +863,7 @@ window.addEventListener('keydown', function(e) {
     if (gameState === "CLEAR") {
         if (e.key === "z" || e.key === "Z" || e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            gameState = "TITLE";
-            currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+            returnToTitle();
         }
         return;
     }
@@ -722,8 +897,7 @@ document.getElementById('screenContainer').addEventListener('pointerdown', funct
     } else if (gameState === "BOOT_CRT" || gameState === "BOOT_TEXT" || gameState === "TITLE") {
         startExploring();
     } else if (gameState === "CLEAR") {
-        gameState = "TITLE";
-        currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+        returnToTitle();
     }
 });
 
@@ -754,8 +928,7 @@ function setupButton(id, callback) {
             return;
         }
         if (gameState === "CLEAR") {
-            gameState = "TITLE";
-            currentMessage = "READY. PRESS ANY KEY OR TAP SCREEN";
+            returnToTitle();
             return;
         }
         callback();
@@ -772,6 +945,25 @@ mapToggleBtn.addEventListener('pointerdown', (e) => {
         mapToggleBtn.className = showMap ? "toggle-btn active" : "toggle-btn";
         playStepSound();
     }
+});
+
+// BGMだけを切り替える。効果音は引き続き鳴らす。
+const bgmToggleBtn = document.getElementById('bgm-toggle');
+bgmToggleBtn.addEventListener('click', () => {
+    bgmEnabled = !bgmEnabled;
+    bgmToggleBtn.innerText = bgmEnabled ? 'BGM: ON' : 'BGM: OFF';
+    bgmToggleBtn.classList.toggle('active', bgmEnabled);
+    bgmToggleBtn.setAttribute('aria-pressed', String(bgmEnabled));
+    if (!bgmEnabled) {
+        stopBgm();
+    } else if (gameState === 'PLAY' || gameState === 'CLEAR') {
+        initAudio();
+        if (gameState === 'PLAY') startEerieBgm();
+        else startHappyClearBgm();
+    }
+});
+bgmToggleBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
 });
 
 // --- アクション処理関数 ---
@@ -922,6 +1114,7 @@ function executeAction() {
                 }
 
                 gameState = "CLEAR";
+                startHappyClearBgm();
                 playGetItemSound();
                 triggerActionEffects();
             } else {
