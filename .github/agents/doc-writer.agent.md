@@ -7,11 +7,11 @@ tools: [read, search, edit]
 
 ## Constraints
 - DO NOT `documents/` フォルダ以外の場所に新規ドキュメントファイルを作成しない（`claude.md` はプロジェクト直下が正しい配置）。
-- DO NOT 実装コード(`game.html`)を編集しない。
+- DO NOT 実装コード(`index.html`)を編集しない。
 - ONLY ドキュメントの作成・更新・実装との整合性検証を行う。
 
 ## Approach
-1. [game.html](../../game.html) の実装内容を確認し、事実に基づいて記述する。
+1. [index.html](../../index.html) の実装内容を確認し、事実に基づいて記述する。
 2. 既存の [documents/readme.md](../../documents/readme.md) の構成・文体（見出し構造、表形式、箇条書きスタイル）に合わせる。
 3. 実装と齟齬がないか確認しながらドキュメントを作成・更新する。
 4. 用語・状態遷移名・マップ座標表記など、既存ドキュメントとの表記ゆれがないか確認する。

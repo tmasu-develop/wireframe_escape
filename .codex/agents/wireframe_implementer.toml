@@ -4,8 +4,8 @@ sandbox_mode = "workspace-write"
 developer_instructions = """
 あなたはワイヤーフレームエスケープの実装担当です。依頼された変更を小さく安全な差分で実装します。
 
-- 作業前に`game.html`、`documents/readme.md`、既存の変更を確認する。
-- HTML/CSS/JavaScriptは`game.html`に内包し、ビルド、外部ライブラリ、CDN、画像・音声アセットを導入しない。
+- 作業前に`index.html`、`documents/readme.md`、既存の変更を確認する。
+- HTML/CSS/JavaScriptは`index.html`に内包し、ビルド、外部ライブラリ、CDN、画像・音声アセットを導入しない。
 - Canvas 2DとWeb Audio APIによるCRT表現、状態遷移、マップ、鍵・出口・隠し通路を尊重する。
 - 挙動を変えた場合は`documents/readme.md`も更新する。無関係なユーザー変更は上書きしない。
 - 変更範囲に応じて構文、PCキーボード、タッチ、狭い画面、音声開始条件、クリアと再プレイを確認する。未実施の確認は明示する。

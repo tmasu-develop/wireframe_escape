@@ -12,11 +12,11 @@
 - **依存関係**: 外部ライブラリ・外部アセット（画像・音声ファイル）は一切使用しません。
 - **グラフィック**: HTML5 Canvas 2D API（`requestAnimationFrame` によるループ描画）
 - **オーディオ**: Web Audio API（`OscillatorNode` / `GainNode` / `AudioBufferSourceNode` による効果音のリアルタイム合成）
-- **ファイル構成**: `game.html` 1ファイルに HTML / CSS(`<style>`) / JavaScript(`<script>`) がすべて内包されています。ビルドツールやパッケージマネージャは使用していません。
+- **ファイル構成**: `index.html` 1ファイルに HTML / CSS(`<style>`) / JavaScript(`<script>`) がすべて内包されています。ビルドツールやパッケージマネージャは使用していません。
 
 ## 開発・動作確認方法
 
-- ビルド不要。[game.html](game.html) をブラウザで直接開くか、簡易HTTPサーバー（例: `python3 -m http.server`）で配信して動作確認してください。
+- ビルド不要。[index.html](index.html) をブラウザで直接開くか、簡易HTTPサーバー（例: `python3 -m http.server`）で配信して動作確認してください。
 - 外部ネットワークアクセスやCDN読み込みは行わないでください（オフラインで完結する構成を維持すること）。
 
 ## コーディング方針

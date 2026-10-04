@@ -2,17 +2,17 @@
 
 ## プロジェクト概要
 
-「GREEN MONITOR ESCAPE」は、1980年代初頭のグリーンモニターCRTを模した疑似3Dワイヤーフレーム脱出ゲームです。実装はルートの`game.html`にHTML、CSS、JavaScriptをまとめた静的Webアプリで、ビルド工程はありません。正式仕様は`documents/readme.md`を参照してください。
+「GREEN MONITOR ESCAPE」は、1980年代初頭のグリーンモニターCRTを模した疑似3Dワイヤーフレーム脱出ゲームです。実装はルートの`index.html`にHTML、CSS、JavaScriptをまとめた静的Webアプリで、ビルド工程はありません。正式仕様は`documents/readme.md`を参照してください。
 
 ## 作業前の確認
 
-- 実装変更では、先に`game.html`と`documents/readme.md`を確認する。
+- 実装変更では、先に`index.html`と`documents/readme.md`を確認する。
 - 仕様と実装に差がある場合は、現行実装を基準として差異を報告する。
 - ユーザーが行った既存変更を尊重し、依頼と無関係な差分を上書きしない。
 
 ## 実装方針
 
-- HTML、CSS、JavaScriptは原則として`game.html`内に維持する。
+- HTML、CSS、JavaScriptは原則として`index.html`内に維持する。
 - 外部ライブラリ、CDN、ビルドツール、画像・音声アセットを追加しない。
 - ビジュアルはHTML5 CanvasとCSS、音響はWeb Audio APIによって生成する。
 - ネオングリーン、スキャンライン、発光、ノイズなど、既存のCRT表現を保つ。
@@ -24,7 +24,7 @@
 
 ## 検証
 
-- `game.html`をブラウザで直接開くか、必要に応じて簡易HTTPサーバーで配信する。
+- `index.html`をブラウザで直接開くか、必要に応じて簡易HTTPサーバーで配信する。
 - 変更範囲に応じて、起動演出、タイトル、移動、旋回、ACTION、CANCEL、ミニマップ、鍵取得、脱出、クリア後の再開を確認する。
 - 隠し通路、ベストタイム、発見記録を変更した場合は、保存と再読み込みも確認する。
 - キーボード、タッチ、デスクトップ幅、狭いモバイル幅、音声開始、ブラウザコンソールを確認する。
@@ -35,7 +35,7 @@
 作業を分担する場合は`.codex/agents/`のプロジェクト専用エージェントを使う。
 
 - `wireframe_designer`: 要件、UI、状態遷移、描画、音響の設計
-- `wireframe_implementer`: `game.html`の実装、仕様更新、動作確認
+- `wireframe_implementer`: `index.html`の実装、仕様更新、動作確認
 - `wireframe_reviewer`: 動作不良、回帰、性能、操作性のレビュー
 - `wireframe_tester`: 起動からクリアまでのブラウザ検証
 - `wireframe_documenter`: `documents/`内の日本語仕様書の更新
